@@ -48,9 +48,15 @@ myfile3->Close();
 TDirectory* dir4 = gDirectory;
 TFile *myfile4 = new TFile("./histos_datasets_v2/histos_TTbar_sempeso.root");
 dir4->cd();
-TH1F *h_ttbar = (TH1F*) myfile3->Get("evjj_mass")->Clone("h_ttbar");
+TH1F *h_ttbar = (TH1F*) myfile4->Get("evjj_mass")->Clone("h_ttbar");
 myfile4->Close();
 
+
+TDirectory* dir5 = gDirectory;
+TFile *myfile5 = new TFile("./histos_datasets_v2/histos_WW_sempeso.root");
+dir5->cd();
+TH1F *h_WW = (TH1F*) myfile5->Get("evjj_mass")->Clone("h_WW");
+myfile5->Close();
 
 int Irebin = 2;
 
@@ -59,6 +65,7 @@ h_data->Rebin(Irebin);
 h_sig->Rebin(Irebin);
 h_W2jets->Rebin(Irebin);
 h_ttbar->Rebin(Irebin);
+h_WW->Rebin(Irebin);
 
 printf("\n INFO: Rebinning the histograms with a factor %d. Binwidth is now %5.2f GeV\n\n", Irebin, h_data->GetBinWidth(1));
 
@@ -78,22 +85,38 @@ for (int i_bin = 1; i_bin < h_sig_plus_W2jets->GetNbinsX(); i_bin++){
   h_sig_plus_W2jets_ttbar->SetBinContent (i_bin, h_ttbar->GetBinContent(i_bin) + h_sig_plus_W2jets->GetBinContent(i_bin));
 }
 
+// prepare cumulative histogram for signal + W2Jets + ttbar
+TH1D *h_sig_plus_W2jets_ttbar_WW = (TH1D*) h_sig_plus_W2jets_ttbar->Clone("h_sig_plus_W2jets_ttbar");
+h_sig_plus_W2jets_ttbar_WW->Reset();
+for (int i_bin = 1; i_bin < h_sig_plus_W2jets_ttbar->GetNbinsX(); i_bin++){
+  h_sig_plus_W2jets_ttbar_WW->SetBinContent (i_bin, h_WW->GetBinContent(i_bin) + h_sig_plus_W2jets_ttbar->GetBinContent(i_bin));
+}
+
 // prepare canvas
 TCanvas *canvas1 = new TCanvas( "canvas1","Standard Canvas", 600, 400);
 canvas1->cd();
 
+//plot histograms (sig + W2jets + ttbar + WW)
+h_WW->SetFillColor(6);
+h_W2jets->SetFillColor(6);
+h_ttbar->SetFillColor(6);
+h_sig_plus_W2jets_ttbar_WW->SetFillColor(6);
+h_sig_plus_W2jets_ttbar_WW->SetAxisRange(0.,25000.,"Y");
+h_sig_plus_W2jets_ttbar_WW->SetAxisRange(100., 600., "X");
+h_sig_plus_W2jets_ttbar_WW->Draw("hist");
+h_sig_plus_W2jets_ttbar_WW->SetStats(0);
+
 //plot histograms (sig + W2jets + ttbar)
-h_W2jets->SetFillColor(2);
-h_ttbar->SetFillColor(2);
-h_sig_plus_W2jets_ttbar->SetFillColor(2);
-h_sig_plus_W2jets_ttbar->SetAxisRange(0.,25000.,"Y");
-h_sig_plus_W2jets_ttbar->SetAxisRange(100., 600., "X");
-h_sig_plus_W2jets_ttbar->Draw("hist");
+h_W2jets->SetFillColor(8);
+h_ttbar->SetFillColor(8);
+h_sig_plus_W2jets_ttbar->SetFillColor(8);
+h_sig_plus_W2jets_ttbar->Draw("same");
+h_sig_plus_W2jets_ttbar->Draw("axis same");
 h_sig_plus_W2jets_ttbar->SetStats(0);
 
 //add histograms (sig + W2jets)
-h_W2jets->SetFillColor(8);
-h_sig_plus_W2jets->SetFillColor(8);
+h_W2jets->SetFillColor(2);
+h_sig_plus_W2jets->SetFillColor(2);
 h_sig_plus_W2jets->Draw("same");
 h_sig_plus_W2jets->Draw("axis same");
 h_sig_plus_W2jets->SetStats(0);
@@ -117,12 +140,14 @@ legend->SetFillColor(0);
 TLegendEntry *legend_entry1 = legend->AddEntry(h_sig," Higgs", "f");
 TLegendEntry *legend_entry2 = legend->AddEntry(h_W2jets," Wjets", "f");
 TLegendEntry *legend_entry3 = legend->AddEntry(h_ttbar, " TTbar", "f");
+TLegendEntry *legend_entry4 = legend->AddEntry(h_WW, " WW", "f");
 legend_entry1->SetTextSize(0.05);
 legend_entry2->SetTextSize(0.05);
 legend_entry3->SetTextSize(0.05);
+legend_entry4->SetTextSize(0.05);
 legend->Draw();
 
-canvas1->SaveAs("./evjj_mass/btag_veto/4body_hist_h550_v2.png");
+canvas1->SaveAs("./evjj_mass/btag_veto/4body_hist_h550_v3.png");
 
 return;
 
